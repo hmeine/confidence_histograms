@@ -10,10 +10,10 @@ measures.
 
 Details can be found in our paper:
 
-  Farina Kock, Felix Thielke, Grzegorz Chlebus, and Hans Meine:
-  **Confidence Histograms for Model Reliability Analysis and Temperature Calibration**
-  accepted at MIDL 2022
-  https://openreview.net/forum?id=p2f6ROn1h02
+    Farina Kock, Felix Thielke, Grzegorz Chlebus, and Hans Meine:
+    **Confidence Histograms for Model Reliability Analysis and Temperature Calibration**
+    Proc. Medical Imaging with Deep Learning 2022
+    https://openreview.net/forum?id=p2f6ROn1h02
 
 If you find this code useful, we would be happy about feedback, contributions or
 citations of the above paper.
