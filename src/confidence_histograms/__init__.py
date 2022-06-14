@@ -446,6 +446,8 @@ class ConfidenceHistograms:
         confidence, total_reliability, _ = self.reliability_diagram(bins, label, adaptive_binning = adaptive_binning)
 
         if per_case_boxplots and self.case_count() > 1:
+            if adaptive_binning:
+                raise NotImplementedError('adaptive_binning cannot be combined with per_case_boxplots yet')
             _, reliability = self.reliability_per_case(bins, label = label)
             # boxplot() does not support masked arrays, so we need to remove masked values manually:
             mpl_ax.boxplot([r.compressed() for r in reliability.T], positions = confidence, widths= 0.68/bins,
