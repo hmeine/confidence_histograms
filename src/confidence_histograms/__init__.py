@@ -145,8 +145,8 @@ class ConfidenceHistograms:
         '''
         assert np.ndim(case_label_hist) == 3
         assert np.shape(case_label_hist)[1] == 2
-        # FIXME: what about the optimization for label_count == 2?
-        assert np.shape(case_label_hist)[1:] == np.shape(case_prediction_hist)
+        if len(case_prediction_hist): # allow optimization for label_count == 2
+            assert np.shape(case_label_hist)[1:] == np.shape(case_prediction_hist)
         assert len(self._label_histograms) == len(self._prediction_histograms)
 
         if not isinstance(self._label_histograms, list):
@@ -163,7 +163,8 @@ class ConfidenceHistograms:
             assert np.shape(case_uncertainty_hist) == np.shape(self._uncertainty_histograms[0])
 
         self._label_histograms.append(np.asarray(case_label_hist))
-        self._prediction_histograms.append(np.asarray(case_prediction_hist))
+        if len(case_prediction_hist):
+            self._prediction_histograms.append(np.asarray(case_prediction_hist))
         self._uncertainty_histograms.append(np.asarray(case_uncertainty_hist))
 
     def __len__(self) -> int:
