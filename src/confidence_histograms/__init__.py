@@ -122,7 +122,7 @@ class ConfidenceHistograms:
             # be computed based on self._label_histograms alone
             case_prediction_hist = np.array([])
 
-        normalized_entropy = -((predictions * np.log(predictions)).sum(-1)
+        normalized_entropy = -((predictions * np.log(np.where(predictions != 0, predictions, 1))).sum(-1)
                                / np.log(label_count))
         case_uncertainty_hist = np.histogram2d(
             correctness, normalized_entropy,
