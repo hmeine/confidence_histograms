@@ -45,6 +45,7 @@ class ConfidenceHistograms:
     ADAPTIVE_CONFIDENCE = True
     REVISED_UCE = True
     SMOOTH_HISTOGRAMS = False
+    STATISTICS_UNIT = '%' # use r'\,\%' for LaTeX mode
 
     def __init__(self, label_histograms: Union[List[np.ndarray], np.ndarray],
                  prediction_histograms: Union[List[np.ndarray], np.ndarray],
@@ -493,16 +494,25 @@ class ConfidenceHistograms:
             mpl_ax.plot(confidence, total_reliability, lw = 2)
 
         if summary_statistics:
-            nll = self.negative_log_likelihood()
+            if summary_statistics is True:
+                summary_statistics = 'NLL ECE MCE UCE'.split()
+            
             ece, uece, mce = self.calibration_errors(bins, label = 'all')
-            uce = self.uncertainty_calibration_error(bins)
-            labels = [
-                f'NLL = {nll:.3f}',
-                f'ECE = {ece:.3f}',
-                f'MCE = {mce:.3f}',
-                f'uECE = {uece:.3f}',
-                f'UCE = {uce:.3f}'
-            ]
+            available_stats = dict(
+                NLL = self.negative_log_likelihood(),
+                ECE = ece,
+                uECE = uece,
+                MCE = mce,
+                UCE = self.uncertainty_calibration_error(bins))
+
+            if not self.STATISTICS_UNIT:
+                labels = [f'{stat} = {available_stats[stat]:.3f}'
+                          for stat in summary_statistics]
+            else:
+                assert self.STATISTICS_UNIT.endswith('%')
+                labels = [f'{stat} = {100*available_stats[stat]:.1f}{self.STATISTICS_UNIT}'
+                          for stat in summary_statistics]
+
             if temperature_label:
                 labels.append(temperature_label)
             mpl_ax.text(0.05, 0.95, '\n'.join(labels),
