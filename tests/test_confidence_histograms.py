@@ -1,13 +1,13 @@
 # Copyright (c) Fraunhofer MEVIS, Germany. All rights reserved.
 # **InsertLicense** code author="Hans Meine"
 
-import numpy
+import numpy as np
 from .confidence_histograms import ConfidenceHistograms
 
 
 # test data for an "interesting" ROC curve, based on iris dataset / random noise
 # see https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
-Y_SCORES = numpy.array(
+Y_SCORES = np.array(
       [[0.20904258, 0.44281479, 0.72972079],
        [0.53826472, 0.28628506, 0.55947165],
        [0.72628705, 0.18578229, 0.46880349],
@@ -84,11 +84,11 @@ Y_SCORES = numpy.array(
        [0.80357607, 0.18434717, 0.39677547],
        [0.42227869, 0.48664587, 0.4784463 ]])
 
-Y_TEST = numpy.array(
+Y_TEST = np.array(
     [2, 1, 0, 2, 0, 2, 0, 1, 1, 1, 2, 1, 1, 1, 1, 0, 1, 1, 0, 0, 2, 1,
      0, 0, 2, 0, 0, 1, 1, 0, 2, 1, 0, 2, 2, 1, 0, 1, 1, 1, 2, 0, 2, 0,
      0, 1, 2, 2, 2, 2, 1, 2, 1, 1, 2, 2, 2, 2, 1, 2, 1, 0, 2, 1, 1, 1,
-     1, 2, 0, 0, 2, 1, 0, 0, 1])[:,numpy.newaxis] == numpy.arange(3)
+     1, 2, 0, 0, 2, 1, 0, 0, 1])[:,np.newaxis] == np.arange(3)
 
 
 def test_reliability_diagram_adding():
@@ -125,7 +125,7 @@ def test_reliability_diagram_standard():
 
     bin_confidence, accuracy, bin_totals = ch.reliability_diagram()
     predicted_confidence = Y_SCORES.max(axis = 1)
-    correctness = numpy.argmax(Y_SCORES, axis = 1) == numpy.argmax(Y_TEST, axis = 1)
+    correctness = np.argmax(Y_SCORES, axis = 1) == np.argmax(Y_TEST, axis = 1)
     for bin_index in range(16):
         samples_in_bin = (predicted_confidence >= bin_index / 16)
         if bin_index < 15:
@@ -135,7 +135,7 @@ def test_reliability_diagram_standard():
         assert bin_totals[bin_index] == samples_in_bin.sum()
 
         if not samples_in_bin.any():
-            assert numpy.ma.is_masked(accuracy[bin_index])
+            assert np.ma.is_masked(accuracy[bin_index])
         else:
             bin_accuracy = correctness[samples_in_bin].mean()
             assert abs(bin_accuracy - accuracy[bin_index]) < 1e-10
@@ -158,7 +158,7 @@ def test_nll():
         # compute NLL and expected maximal error range taking quantization into account
         # bin size is 1/2^14, maximal quantization error is thus 1/2^15
         nll_scipy, nll_scipy_min, nll_scipy_max = (
-            numpy.mean(
+            np.mean(
                 -scipy.special.xlogy(Y_TEST, (Y_SCORES - ofs).clip(0, 1)).sum(-1)
             )
             for ofs in (0, -1/2**15, 1/2**15)
@@ -174,7 +174,7 @@ def test_nll():
     assert ch.negative_log_likelihood() <= nll_scipy_max
 
 
-BRIER_SCORES = numpy.array(
+BRIER_SCORES = np.array(
     [[0.14, 0.38, 0.4 , 0.04, 0.05],
      [0.55, 0.05, 0.34, 0.04, 0.01],
      [0.3 , 0.35, 0.18, 0.09, 0.08],
@@ -187,7 +187,7 @@ BRIER_SCORES = numpy.array(
      [0.17, 0.45, 0.11, 0.25, 0.01]]
 )
 
-BRIER_TEST = numpy.array(
+BRIER_TEST = np.array(
     [[0, 0, 0, 0, 1],
      [0, 0, 0, 0, 1],
      [0, 0, 0, 0, 1],
@@ -205,4 +205,4 @@ def test_brier_score():
     ch.add_case_predictions(BRIER_SCORES, BRIER_TEST, internal_bin_count = 2**14)
 
     # https://stats.stackexchange.com/questions/403544/how-to-compute-the-brier-score-for-more-than-two-classes
-    assert numpy.isclose(ch.multiclass_brier_score(), 1.00689, 1.5e-5)
+    assert np.isclose(ch.multiclass_brier_score(), 1.00689, 1.5e-5)

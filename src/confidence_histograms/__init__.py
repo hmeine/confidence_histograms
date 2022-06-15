@@ -2,7 +2,7 @@
 # **InsertLicense** code author="Hans Meine"
 
 from typing import List, Optional, Tuple, Union
-import numpy
+import numpy as np
 
 
 class ConfidenceHistograms:
@@ -40,9 +40,9 @@ class ConfidenceHistograms:
     ADAPTIVE_CONFIDENCE = True
     SMOOTH_HISTOGRAMS = False
 
-    def __init__(self, label_histograms: Union[List[numpy.ndarray], numpy.ndarray],
-                 prediction_histograms: Union[List[numpy.ndarray], numpy.ndarray],
-                 uncertainty_histograms: Union[List[numpy.ndarray], numpy.ndarray]):
+    def __init__(self, label_histograms: Union[List[np.ndarray], np.ndarray],
+                 prediction_histograms: Union[List[np.ndarray], np.ndarray],
+                 uncertainty_histograms: Union[List[np.ndarray], np.ndarray]):
         self._label_histograms = label_histograms
         self._prediction_histograms = prediction_histograms
         self._uncertainty_histograms = uncertainty_histograms
@@ -56,7 +56,7 @@ class ConfidenceHistograms:
 
     @property
     def label_histograms(self):
-        return numpy.asarray(self._label_histograms)
+        return np.asarray(self._label_histograms)
 
     @property
     def prediction_histograms(self):
@@ -66,15 +66,15 @@ class ConfidenceHistograms:
             result = self.label_histograms.sum(1)
             result[:,:,:result.shape[-1]//2] = 0
             return result
-        return numpy.asarray(self._prediction_histograms)
+        return np.asarray(self._prediction_histograms)
 
     @property
     def uncertainty_histograms(self):
-        return numpy.asarray(self._uncertainty_histograms)
+        return np.asarray(self._uncertainty_histograms)
 
-    def add_case_predictions(self, predictions: numpy.ndarray, reference: numpy.ndarray,
-                             weights: Optional[numpy.ndarray] = None, internal_bin_count: int = 2**14):
-        assert numpy.ndim(predictions) >= 2, 'expecting categorical vectors for both inputs'
+    def add_case_predictions(self, predictions: np.ndarray, reference: np.ndarray,
+                             weights: Optional[np.ndarray] = None, internal_bin_count: int = 2**14):
+        assert np.ndim(predictions) >= 2, 'expecting categorical vectors for both inputs'
         assert predictions.shape == reference.shape
         label_count = predictions.shape[-1]
         assert label_count >= 2, 'expecting categorical vectors with >=2 classes'
@@ -87,45 +87,45 @@ class ConfidenceHistograms:
         reference = reference.reshape((-1, reference.shape[-1]))
         weights = weights.ravel() if weights is not None else None
 
-        predicted_label = numpy.argmax(predictions, axis = -1)
-        reference_label = numpy.argmax(reference, axis = -1)
-        correctness = (predicted_label == reference_label).astype(numpy.uint8)
-        histogram2d_range = numpy.array([[0.0, 1.0], [0.0, 1.0]])
+        predicted_label = np.argmax(predictions, axis = -1)
+        reference_label = np.argmax(reference, axis = -1)
+        correctness = (predicted_label == reference_label).astype(np.uint8)
+        histogram2d_range = np.array([[0.0, 1.0], [0.0, 1.0]])
 
         case_label_hist = []
         for label in range(label_count):
             case_label_hist.append(
-                numpy.histogram2d(reference_label == label, predictions[:,label],
+                np.histogram2d(reference_label == label, predictions[:,label],
                                   bins = [2, internal_bin_count],
                                   range = histogram2d_range, weights = weights)[0]
             )
 
         if label_count > 2:
-            pred_confidence = numpy.choose(predicted_label, predictions.T)
+            pred_confidence = np.choose(predicted_label, predictions.T)
             case_prediction_hist = (
-                numpy.histogram2d(correctness, pred_confidence,
+                np.histogram2d(correctness, pred_confidence,
                                   bins = [2, internal_bin_count],
                                   range = histogram2d_range, weights = weights)[0]
             )
         else:
             # optimization: for binary problems, prediction_histogram() can
             # be computed based on self._label_histograms alone
-            case_prediction_hist = numpy.array([])
+            case_prediction_hist = np.array([])
 
-        normalized_entropy = -((predictions * numpy.log(predictions)).sum(-1)
-                               / numpy.log(label_count))
-        case_uncertainty_hist = numpy.histogram2d(
+        normalized_entropy = -((predictions * np.log(predictions)).sum(-1)
+                               / np.log(label_count))
+        case_uncertainty_hist = np.histogram2d(
             correctness, normalized_entropy,
             bins = [2, internal_bin_count],
             range = histogram2d_range, weights = weights)[0]
 
         self.add_case_accumulators(
-            numpy.asanyarray(case_label_hist), case_prediction_hist, case_uncertainty_hist)
+            np.asanyarray(case_label_hist), case_prediction_hist, case_uncertainty_hist)
 
     def add_case_accumulators(self,
-                              case_label_hist: numpy.ndarray,
-                              case_prediction_hist: numpy.ndarray,
-                              case_uncertainty_hist: numpy.ndarray):
+                              case_label_hist: np.ndarray,
+                              case_prediction_hist: np.ndarray,
+                              case_uncertainty_hist: np.ndarray):
         '''Add 3D accumulator arrays with shape (labelCount, 2,
         internalBinCount) for the per-label histograms and (2, internalBinCount)
         for the prediction histogram. The first (label) dimension depends on the
@@ -133,10 +133,10 @@ class ConfidenceHistograms:
         accumulators for the wrong/true labels. The third dimension spans the
         confidence range from 0..1. Increases the number of cases by one.
         '''
-        assert numpy.ndim(case_label_hist) == 3
-        assert numpy.shape(case_label_hist)[1] == 2
+        assert np.ndim(case_label_hist) == 3
+        assert np.shape(case_label_hist)[1] == 2
         # FIXME: what about the optimization for label_count == 2?
-        assert numpy.shape(case_label_hist)[1:] == numpy.shape(case_prediction_hist)
+        assert np.shape(case_label_hist)[1:] == np.shape(case_prediction_hist)
         assert len(self._label_histograms) == len(self._prediction_histograms)
 
         if not isinstance(self._label_histograms, list):
@@ -148,13 +148,13 @@ class ConfidenceHistograms:
 
         if self.case_count():
             # shape needs to be compatible with existing entries:
-            assert numpy.shape(case_label_hist) == numpy.shape(self._label_histograms[0])
-            assert numpy.shape(case_prediction_hist) == numpy.shape(self._prediction_histograms[0])
-            assert numpy.shape(case_uncertainty_hist) == numpy.shape(self._uncertainty_histograms[0])
+            assert np.shape(case_label_hist) == np.shape(self._label_histograms[0])
+            assert np.shape(case_prediction_hist) == np.shape(self._prediction_histograms[0])
+            assert np.shape(case_uncertainty_hist) == np.shape(self._uncertainty_histograms[0])
 
-        self._label_histograms.append(numpy.asarray(case_label_hist))
-        self._prediction_histograms.append(numpy.asarray(case_prediction_hist))
-        self._uncertainty_histograms.append(numpy.asarray(case_uncertainty_hist))
+        self._label_histograms.append(np.asarray(case_label_hist))
+        self._prediction_histograms.append(np.asarray(case_prediction_hist))
+        self._uncertainty_histograms.append(np.asarray(case_uncertainty_hist))
 
     def __len__(self) -> int:
         return self.case_count()
@@ -193,7 +193,7 @@ class ConfidenceHistograms:
             self.uncertainty_histograms)
 
     def save(self, filename: str) -> None:
-        numpy.savez_compressed(
+        np.savez_compressed(
             filename,
             self.label_histograms,
             self.prediction_histograms,
@@ -201,16 +201,16 @@ class ConfidenceHistograms:
         )
 
     def load(self, filename: str) -> None:
-        with numpy.load(filename) as state:
+        with np.load(filename) as state:
             histograms = tuple(state.values())
             self._label_histograms, self._prediction_histograms = histograms[:2]
             self._uncertainty_histograms = histograms[2] if len(histograms) > 2 else []
-        if numpy.ndim(self._label_histograms) != 4:
+        if np.ndim(self._label_histograms) != 4:
             raise ValueError(f'loaded confidence histograms per label have shape {self._label_histograms.shape}, expected 4D')
-        if numpy.ndim(self._prediction_histograms) != 3:
+        if np.ndim(self._prediction_histograms) != 3:
             raise ValueError(f'loaded confidence histograms for the prediction have shape {self._prediction_histograms.shape}, expected 3D')
-        if len(self._uncertainty_histograms) and numpy.ndim(self._uncertainty_histograms) != 3:
-            raise ValueError(f'loaded uncertainty histograms have shape {numpy.shape(self._uncertainty_histograms)}, expected 3D')
+        if len(self._uncertainty_histograms) and np.ndim(self._uncertainty_histograms) != 3:
+            raise ValueError(f'loaded uncertainty histograms have shape {np.shape(self._uncertainty_histograms)}, expected 3D')
 
     @classmethod
     def create_empty(cls) -> 'ConfidenceHistograms':
@@ -223,7 +223,7 @@ class ConfidenceHistograms:
         return result
 
     @staticmethod
-    def rebin(array: numpy.ndarray, bins = 16) -> numpy.ndarray:
+    def rebin(array: np.ndarray, bins = 16) -> np.ndarray:
         '''Rebin confidence (last axis) down to more coarse sampling.
 
         Optionally, perform channel smoothing (each confidence entry between two
@@ -236,9 +236,9 @@ class ConfidenceHistograms:
         reshaped = array.reshape(new_shape)
         if ConfidenceHistograms.SMOOTH_HISTOGRAMS:
             # the right half of each bin (except the last) shall be moved right, with a lambda ranging from 0 to 0.5:
-            to_right = reshaped[...,:-1,:] * numpy.linspace(-0.5, 0.5, reshaped.shape[-1]).clip(0, 1)
+            to_right = reshaped[...,:-1,:] * np.linspace(-0.5, 0.5, reshaped.shape[-1]).clip(0, 1)
             # the left half of each bin (except the first) shall be moved right, with a lambda ranging from 0.5 to 0:
-            to_left  = reshaped[...,1: ,:] * numpy.linspace(0.5, -0.5, reshaped.shape[-1]).clip(0, 1)
+            to_left  = reshaped[...,1: ,:] * np.linspace(0.5, -0.5, reshaped.shape[-1]).clip(0, 1)
             reshaped[...,:-1,:] += to_left - to_right
             reshaped[...,1:,:] += to_right - to_left
         return reshaped.sum(-1)
@@ -250,7 +250,7 @@ class ConfidenceHistograms:
         individually
         '''
         confidence, reliability, bin_totals = self.reliability_diagram(bins, label = label)
-        calibrationError = numpy.abs(reliability - confidence)
+        calibrationError = np.abs(reliability - confidence)
         ece = (bin_totals * calibrationError).sum() / bin_totals.sum()
         uece = calibrationError.mean()
         return ece, uece, calibrationError.max()
@@ -284,12 +284,12 @@ class ConfidenceHistograms:
         _, _, result = self.calibration_errors(bins, label)
         return result
 
-    def _internal_bin_confidences(self) -> numpy.ndarray:
+    def _internal_bin_confidences(self) -> np.ndarray:
         internal_bins = self.internal_bin_count()
-        return (numpy.arange(internal_bins) + 0.5) / internal_bins
+        return (np.arange(internal_bins) + 0.5) / internal_bins
 
     def reliability_diagram(self, bins: int = 16, label: Union[int, str] = 'predicted',
-            adaptive_binning: bool = False) -> Tuple[numpy.ndarray, numpy.ma.MaskedArray, numpy.ma.MaskedArray]:
+            adaptive_binning: bool = False) -> Tuple[np.ndarray, np.ma.MaskedArray, np.ma.MaskedArray]:
         '''
         Return (confidence, observed_frequency, bin_totals) tuple of ndarrays
         for plotting reliability diagrams.  If label == 'predicted', the diagram
@@ -313,7 +313,7 @@ class ConfidenceHistograms:
         else:
             raise ValueError("label must be 'predicted', 'all', or a valid integer label")
 
-        while numpy.ndim(confidence_histograms) > 2:
+        while np.ndim(confidence_histograms) > 2:
             confidence_histograms = confidence_histograms.sum(0)
 
         if adaptive_binning:
@@ -322,14 +322,14 @@ class ConfidenceHistograms:
             rebin = self.rebin
 
         if self.ADAPTIVE_CONFIDENCE:
-            binned = rebin(numpy.vstack((
+            binned = rebin(np.vstack((
                 confidence_histograms,
                 self._internal_bin_confidences() * confidence_histograms.sum(0)
             )), bins)
             confidence = binned[2] / (binned[:2].sum(0)).clip(1e-8, None)
         else:
             binned = rebin(confidence_histograms, bins)
-            confidence = (numpy.arange(bins) + 0.5) / bins
+            confidence = (np.arange(bins) + 0.5) / bins
 
         correct_classification = binned[1]
         bin_totals = binned[:2].sum(0)
@@ -339,16 +339,16 @@ class ConfidenceHistograms:
             observed_frequency = 1 - observed_frequency
 
         bad_mask = bin_totals < self.MIN_SAMPLES
-        return numpy.ma.masked_array(confidence, bad_mask), numpy.ma.masked_array(observed_frequency, bad_mask), bin_totals
+        return np.ma.masked_array(confidence, bad_mask), np.ma.masked_array(observed_frequency, bad_mask), bin_totals
     
-    def adaptive_binning(self, histogram: numpy.ndarray, bins: int = 16) -> numpy.ndarray:
+    def adaptive_binning(self, histogram: np.ndarray, bins: int = 16) -> np.ndarray:
         histogram_1d = histogram
-        while numpy.ndim(histogram_1d) > 1:
+        while np.ndim(histogram_1d) > 1:
             histogram_1d = histogram_1d.sum(0)
 
         bin_indices = self.adaptive_bin_edges(histogram_1d, bins)
 
-        cumulative_entries = numpy.cumsum(histogram, -1)
+        cumulative_entries = np.cumsum(histogram, -1)
 
         right_bin_indices = bin_indices[1:]
         binned = cumulative_entries[...,right_bin_indices-1]
@@ -358,7 +358,7 @@ class ConfidenceHistograms:
 
         return binned
 
-    def adaptive_bin_edges(self, histogram: numpy.ndarray, bins: int = 16) -> numpy.ndarray:
+    def adaptive_bin_edges(self, histogram: np.ndarray, bins: int = 16) -> np.ndarray:
         '''
         Given a `histogram`, iteratively chunks of a number of bins to the left
         and to the right, trying to take at least 1/nth of the remaining amount,
@@ -367,8 +367,8 @@ class ConfidenceHistograms:
         Returns an ndarray with (bins+1) indices, starting with 0, ending with
         len(array).
         '''
-        assert numpy.ndim(histogram) == 1
-        cumulative_entries = numpy.cumsum(histogram)
+        assert np.ndim(histogram) == 1
+        cumulative_entries = np.cumsum(histogram)
 
         left_bin_edges = [0]
         right_bin_edges = [len(cumulative_entries)]
@@ -381,20 +381,20 @@ class ConfidenceHistograms:
             chunk_amount = remaining_amount / (bins - i)
 
             if i % 2 == 0:
-                next_left_index = left_index + 1 + numpy.searchsorted(
+                next_left_index = left_index + 1 + np.searchsorted(
                     cumulative_entries[left_index+1:right_index], left_value + chunk_amount,
                 )
                 left_bin_edges.append(next_left_index)
             else:
-                next_right_index = left_index + numpy.searchsorted(
+                next_right_index = left_index + np.searchsorted(
                     cumulative_entries[left_index:right_index], right_value - chunk_amount,
                 )
                 right_bin_edges.append(next_right_index)
                 
-        return numpy.asarray(left_bin_edges + right_bin_edges[::-1])
+        return np.asarray(left_bin_edges + right_bin_edges[::-1])
 
-    def reliability_per_case(self, bins: int = 16, label: Union[int, str] = 'predicted') -> Tuple[numpy.ndarray, numpy.ma.MaskedArray]:
-        assert numpy.ndim(self.label_histograms) == 4, 'reliability_per_case() requires per-case info'
+    def reliability_per_case(self, bins: int = 16, label: Union[int, str] = 'predicted') -> Tuple[np.ndarray, np.ma.MaskedArray]:
+        assert np.ndim(self.label_histograms) == 4, 'reliability_per_case() requires per-case info'
 
         result_confidence = []
         result_reliability = []
@@ -403,7 +403,7 @@ class ConfidenceHistograms:
             result_confidence.append(case_confidence)
             result_reliability.append(case_reliability)
 
-        return numpy.ma.asarray(result_confidence).mean(0), numpy.ma.asarray(result_reliability)
+        return np.ma.asarray(result_confidence).mean(0), np.ma.asarray(result_reliability)
 
     @staticmethod
     def _setup_unit_square_axes(mpl_ax, margin = 0.0):
@@ -479,7 +479,7 @@ class ConfidenceHistograms:
 
         self.setup_reliability_diagram_axes(mpl_ax, label)
 
-    def roc_curve(self, label: Union[int, str]) -> Tuple[numpy.ndarray, numpy.ndarray]:
+    def roc_curve(self, label: Union[int, str]) -> Tuple[np.ndarray, np.ndarray]:
         '''Return (fpr, tpr) for the given label.
         
         label = "micro" means micro-averaging all ROC curves for a multiclass problem.
@@ -487,7 +487,7 @@ class ConfidenceHistograms:
         interpolation, for which scipy would be convenient, but we do not want to
         depend on that.)'''
         
-        assert numpy.ndim(self.label_histograms) == 4, ('while ConfidenceHistograms '
+        assert np.ndim(self.label_histograms) == 4, ('while ConfidenceHistograms '
             'in general supports selecting cases or labels, this method does not yet')
 
         if label == 'macro':
@@ -533,7 +533,7 @@ class ConfidenceHistograms:
         '''Computes NLL (which is effectively the same as categorical cross
         entropy) based on the internal histogram representation'''
         histograms = self.label_histograms
-        log_confidence = numpy.log(self._internal_bin_confidences())
+        log_confidence = np.log(self._internal_bin_confidences())
         return -(histograms[...,1,:] * log_confidence).sum() / histograms[...,1,:].sum()
 
     def multiclass_brier_score(self) -> float:
@@ -549,5 +549,5 @@ class ConfidenceHistograms:
 
         # we have binned confidence for true label = 0/1 separately, so
         # we can subtract confidence from 0 / 1 and use the histogram as weights:
-        return (numpy.sum((1 - confidence) ** 2 * true_prob) +
-                numpy.sum((    confidence) ** 2 * false_prob)) / total_count
+        return (np.sum((1 - confidence) ** 2 * true_prob) +
+                np.sum((    confidence) ** 2 * false_prob)) / total_count
