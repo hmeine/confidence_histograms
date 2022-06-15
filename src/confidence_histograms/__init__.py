@@ -417,12 +417,12 @@ class ConfidenceHistograms:
         return np.ma.asarray(result_confidence).mean(0), np.ma.asarray(result_reliability)
 
     @staticmethod
-    def _setup_unit_square_axes(mpl_ax, margin = 0.0):
-        mpl_ax.plot([0, 1], [0, 1], c = 'k', ls = ':')
+    def _setup_unit_square_axes(mpl_ax, margin = 0.0, y_max = 1.0):
+        mpl_ax.plot([0, 1], [0, y_max], c = 'k', ls = ':')
 
-        mpl_ax.set_aspect(1.0)
+        mpl_ax.set_aspect(1 / y_max)
         mpl_ax.set_xlim(0 - margin, 1 + margin)
-        mpl_ax.set_ylim(0 - margin, 1 + margin)
+        mpl_ax.set_ylim(0 - margin, (1 + margin) * y_max)
         if False:
             # the positions of the boxplots are odd and long:
             for l in mpl_ax.get_xticklabels(): l.update(dict(rotation = 90))
@@ -431,18 +431,24 @@ class ConfidenceHistograms:
             xticks = (0, 0.25, 0.5, 0.75, 1)
             mpl_ax.set_xticks(xticks)
             mpl_ax.set_xticklabels(xticks)
-            # for symmetry, reuse ticks for y:
-            mpl_ax.set_yticks(xticks)
-            mpl_ax.set_yticklabels(xticks)
+            if y_max == 1.0:
+                # for symmetry, reuse ticks for y:
+                mpl_ax.set_yticks(xticks)
+                mpl_ax.set_yticklabels(xticks)
 
-    @classmethod
-    def setup_reliability_diagram_axes(cls, mpl_ax, label: Union[int, str]):
-        cls._setup_unit_square_axes(mpl_ax)
+    def _maximum_classification_error(self) -> float:
+        lc = self.label_count()
+        return (lc - 1) / lc
+
+    def setup_reliability_diagram_axes(self, mpl_ax, label: Union[int, str]):
         if label != 'uncertainty':
+            self._setup_unit_square_axes(mpl_ax)
             multiclass = label != 'predicted'
             mpl_ax.set_xlabel('confidence')
             mpl_ax.set_ylabel('observed frequency' if multiclass else 'accuracy')
         else:
+            y_max = self._maximum_classification_error()
+            self._setup_unit_square_axes(mpl_ax, y_max=self._maximum_classification_error())
             mpl_ax.set_xlabel('uncertainty')
             mpl_ax.set_ylabel('error')
 
