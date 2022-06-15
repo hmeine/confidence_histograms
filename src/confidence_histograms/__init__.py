@@ -468,6 +468,7 @@ class ConfidenceHistograms:
             labels = [
                 f'NLL = {nll:.3f}',
                 f'ECE = {ece:.3f}',
+                f'MCE = {mce:.3f}',
                 f'uECE = {uece:.3f}',
                 f'UCE = {uce:.3f}'
             ]
