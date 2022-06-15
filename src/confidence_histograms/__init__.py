@@ -34,10 +34,16 @@ class ConfidenceHistograms:
     edges among two adjacent bins (off by default).  These two options are
     exclusive, since the former does not make sense anymore after channel
     encoding.
+
+    The class attribute REVISED_UCE changes the UCE definition from Laves
+    (REVISED_UCE = False) to reflect that the error at maximal entropy is
+    (n_l-1)/n_l, which deviates significantly from 1.0 for small numbers of
+    labels n_l.
     '''
 
     MIN_SAMPLES = 50
     ADAPTIVE_CONFIDENCE = True
+    REVISED_UCE = True
     SMOOTH_HISTOGRAMS = False
 
     def __init__(self, label_histograms: Union[List[np.ndarray], np.ndarray],
@@ -261,6 +267,8 @@ class ConfidenceHistograms:
         individually
         '''
         confidence, reliability, bin_totals = self.reliability_diagram(bins, label = label)
+        if self.REVISED_UCE and label == 'uncertainty':
+            reliability /= self._maximum_classification_error()
         calibrationError = np.abs(reliability - confidence)
         ece = (bin_totals * calibrationError).sum() / bin_totals.sum()
         uece = calibrationError.mean()
@@ -437,6 +445,10 @@ class ConfidenceHistograms:
                 mpl_ax.set_yticklabels(xticks)
 
     def _maximum_classification_error(self) -> float:
+        '''
+        classification error at maximal entropy, computed as
+        (label_count()-1)/label_count()
+        '''
         lc = self.label_count()
         return (lc - 1) / lc
 
