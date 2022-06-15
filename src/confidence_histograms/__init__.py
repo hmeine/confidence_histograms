@@ -74,6 +74,16 @@ class ConfidenceHistograms:
 
     def add_case_predictions(self, predictions: np.ndarray, reference: np.ndarray,
                              weights: Optional[np.ndarray] = None, internal_bin_count: int = 2**14):
+        '''
+        Compute histograms for a single case and call `add_case_accumulators()`.
+        `predictions` and `reference` should both have the same shape and need
+        to be at least two dimensional; the last dimension is assumed to be the
+        labels/channel dimension of a categorical encoding. (Other dimensions
+        are assumed to be spatial and flattened internally.)
+
+        If `weights` are given, they should have the same spatial shape, without
+        the last dimension, as they will be broadcasted over all labels.
+        '''
         assert np.ndim(predictions) >= 2, 'expecting categorical vectors for both inputs'
         assert predictions.shape == reference.shape
         label_count = predictions.shape[-1]
