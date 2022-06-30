@@ -509,7 +509,7 @@ class ConfidenceHistograms:
                 labels = [f'{stat} = {available_stats[stat]:.3f}'
                           for stat in summary_statistics]
             else:
-                assert self.STATISTICS_UNIT.endswith('%')
+                assert '%' in self.STATISTICS_UNIT
                 labels = [f'{stat} = {100*available_stats[stat]:.1f}{self.STATISTICS_UNIT}'
                           for stat in summary_statistics]
 
