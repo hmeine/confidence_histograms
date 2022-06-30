@@ -461,7 +461,7 @@ class ConfidenceHistograms:
             mpl_ax.set_ylabel('observed frequency' if multiclass else 'accuracy')
         else:
             y_max = self._maximum_classification_error()
-            self._setup_unit_square_axes(mpl_ax, y_max=self._maximum_classification_error())
+            self._setup_unit_square_axes(mpl_ax, y_max=self._maximum_classification_error() if self.REVISED_UCE else 1)
             mpl_ax.set_xlabel('uncertainty')
             mpl_ax.set_ylabel('error')
 
