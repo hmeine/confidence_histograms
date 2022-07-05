@@ -13,6 +13,7 @@ class ConfidenceHistograms:
     4. dimension contains the fine-binned classifier confidence in that label
 
     Therefore:
+    
     * histograms[:,2,1,:] are the confidences for true positives of label 2.
     * histograms[:,2,0,:] are the confidences for false positives of label 2.
     * histograms[:,label!=2,1,:].sum(1) is the same if all labels add up to 1.0.
@@ -38,12 +39,16 @@ class ConfidenceHistograms:
     The class attribute REVISED_UCE changes the UCE definition from Laves
     (REVISED_UCE = False) to reflect that the error at maximal entropy is
     (n_l-1)/n_l, which deviates significantly from 1.0 for small numbers of
-    labels n_l.
+    labels n_l.  On the other hand, drawing a straight line as the ideal curve
+    does not reflect the nonlinear nature of normalized entropy at all. We could
+    not find a closed formular for a target curve yet, and rather see this as a
+    motivation not to use the UCE but the reliability diagram with 'all' labels,
+    which is much simpler to interpret.
     '''
 
     MIN_SAMPLES = 50
     ADAPTIVE_CONFIDENCE = True
-    REVISED_UCE = True
+    REVISED_UCE = False
     SMOOTH_HISTOGRAMS = False
     STATISTICS_UNIT = '%' # use r'\,\%' for LaTeX mode
 
