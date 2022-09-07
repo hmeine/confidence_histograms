@@ -473,12 +473,24 @@ class ConfidenceHistograms:
     def plot_reliability_diagram(self, mpl_ax = None, bins: int = 16, per_case_boxplots: bool = True,
                                  by_label: bool = False, label: Union[int, str] = 'predicted',
                                  adaptive_binning: bool = False,
-                                 summary_statistics = True, temperature_label: Optional[str] = None):
+                                 summary_statistics = True, temperature_label: Optional[str] = None,
+                                 plot_bin_totals: bool = False):
         if mpl_ax is None:
             import matplotlib.pyplot as plt
             mpl_ax = plt.gca()
 
-        confidence, total_reliability, _ = self.reliability_diagram(bins, label, adaptive_binning = adaptive_binning)
+        confidence, total_reliability, bin_totals = self.reliability_diagram(bins, label, adaptive_binning = adaptive_binning)
+
+        if plot_bin_totals:
+            mpl_ax.patch.set_alpha(0)
+            mpl_ax_twin = mpl_ax.twinx()
+            mpl_ax_twin.set_zorder(mpl_ax.get_zorder() - 1)
+            x = np.linspace(0, 1, len(bin_totals))
+            y = bin_totals
+            mpl_ax_twin.bar(x, y, width=0.8/len(confidence), color='lightgrey', linewidth=0, align='center')
+            mpl_ax_twin.set_ylabel('bin count', color='grey')
+            mpl_ax_twin.set_yscale('log')
+            [tick_label.set_color('grey') for tick_label in mpl_ax_twin.yaxis.get_ticklabels()]
 
         if per_case_boxplots and self.case_count() > 1:
             if adaptive_binning:
