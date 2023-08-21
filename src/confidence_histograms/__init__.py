@@ -44,6 +44,14 @@ class ConfidenceHistograms:
     not find a closed formular for a target curve yet, and rather see this as a
     motivation not to use the UCE but the reliability diagram with 'all' labels,
     which is much simpler to interpret.
+
+    BASIC USAGE: Create empty accumulators with `create_empty()`, then add data
+    case-by-case via `add_case_predictions()`.  Then, use one of the methods
+    computing evaluation measures or plotting figures.  In order to investigate
+    calibration for a single case or label, use `case()` or `label()` to select
+    a subset of the accumulated data and call the respective evaluation methods
+    on the resulting object.  Optionally, use `save()` / `load()` to persist the
+    accumulated data and separate evaluation and plotting from data processing.
     '''
 
     MIN_SAMPLES = 50
@@ -91,7 +99,10 @@ class ConfidenceHistograms:
         `predictions` and `reference` should both have the same shape and need
         to be at least two dimensional; the last dimension is assumed to be the
         labels/channel dimension of a categorical encoding. (Other dimensions
-        are assumed to be spatial and flattened internally.)
+        are assumed to be spatial and flattened internally.) `predictions` is
+        assumed to contain floating point pseudo-probabilities that sum up to 1
+        along the channel dimension, and `reference` should be a one-hot encoded
+        target vector.
 
         If `weights` are given, they should have the same spatial shape, without
         the last dimension, as they will be broadcasted over all labels.
