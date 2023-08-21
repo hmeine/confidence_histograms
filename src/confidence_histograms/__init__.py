@@ -170,7 +170,11 @@ class ConfidenceHistograms:
         assert np.shape(case_label_hist)[1] == 2
         if len(case_prediction_hist): # allow optimization for label_count == 2
             assert np.shape(case_label_hist)[1:] == np.shape(case_prediction_hist)
-        assert len(self._label_histograms) == len(self._prediction_histograms)
+            assert len(self._label_histograms) == len(self._prediction_histograms), \
+                'internal accumulators should always have the same number of cases'
+        else:
+            assert len(self._prediction_histograms) == 0, \
+                'optimization for binary classification should be used consistently'
 
         if not isinstance(self._label_histograms, list):
             self._label_histograms = list(self._label_histograms)
