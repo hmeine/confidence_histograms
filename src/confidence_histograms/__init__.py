@@ -54,11 +54,11 @@ class ConfidenceHistograms:
     accumulated data and separate evaluation and plotting from data processing.
     '''
 
-    MIN_SAMPLES = 50
-    ADAPTIVE_CONFIDENCE = True
-    REVISED_UCE = False
-    SMOOTH_HISTOGRAMS = False
-    STATISTICS_UNIT = '%' # use r'\,\%' for LaTeX mode
+    MIN_SAMPLES: int = 50
+    ADAPTIVE_CONFIDENCE: bool = True
+    REVISED_UCE: bool = False
+    SMOOTH_HISTOGRAMS: bool = False
+    STATISTICS_UNIT: str = '%' # use r'\,\%' for LaTeX mode
 
     def __init__(self, label_histograms: Union[List[np.ndarray], np.ndarray],
                  prediction_histograms: Union[List[np.ndarray], np.ndarray],
