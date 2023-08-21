@@ -149,6 +149,16 @@ def test_reliability_diagram_standard():
     assert abs(ch.maximum_calibration_error(16) - mce) < 1e-10
 
 
+def test_binary_case_optimization():
+    ch = ConfidenceHistograms.create_empty()
+    ch.add_case_predictions(Y_SCORES[:15,:2], Y_TEST[:15,:2])
+    ch.add_case_predictions(Y_SCORES[15:,:2], Y_TEST[15:,:2])
+
+    bin_confidence, accuracy, bin_totals = ch.reliability_diagram()
+    ece = ch.expected_calibration_error(16)
+    mce = ch.maximum_calibration_error(16)
+
+
 def test_nll():
     ch = ConfidenceHistograms.create_empty()
     ch.add_case_predictions(Y_SCORES, Y_TEST, internal_bin_count = 2**14)
