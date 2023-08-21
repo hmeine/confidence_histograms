@@ -186,7 +186,8 @@ class ConfidenceHistograms:
         if self.case_count():
             # shape needs to be compatible with existing entries:
             assert np.shape(case_label_hist) == np.shape(self._label_histograms[0])
-            assert np.shape(case_prediction_hist) == np.shape(self._prediction_histograms[0])
+            if len(case_prediction_hist):
+                assert np.shape(case_prediction_hist) == np.shape(self._prediction_histograms[0])
             assert np.shape(case_uncertainty_hist) == np.shape(self._uncertainty_histograms[0])
 
         self._label_histograms.append(np.asarray(case_label_hist))
